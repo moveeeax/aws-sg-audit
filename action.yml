@@ -1,0 +1,55 @@
+name: aws-sg-audit
+description: Audit AWS security groups for world-open sensitive ports and upload SARIF to code scanning.
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  regions:
+    description: Comma-separated AWS regions to scan.
+    required: true
+  public-ports:
+    description: Ports treated as intentionally public (comma-separated).
+    required: false
+    default: "80,443"
+  ignore-tag:
+    description: Skip security groups carrying this tag key.
+    required: false
+    default: "sg-audit-ignore"
+  fail-on:
+    description: Minimum severity that fails the step (medium|high|critical|none).
+    required: false
+    default: "high"
+  version:
+    description: aws-sg-audit version to install (git ref).
+    required: false
+    default: latest
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: "1.22"
+
+    - name: Install aws-sg-audit
+      shell: bash
+      run: go install github.com/moveeeax/aws-sg-audit@${{ inputs.version }}
+
+    - name: Run audit → SARIF
+      shell: bash
+      run: |
+        "$(go env GOPATH)/bin/aws-sg-audit" \
+          --regions "${{ inputs.regions }}" \
+          --public-ports "${{ inputs.public-ports }}" \
+          --ignore-tag "${{ inputs.ignore-tag }}" \
+          --fail-on "${{ inputs.fail-on }}" \
+          --format sarif > sg-audit.sarif
+
+    - name: Upload SARIF
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: sg-audit.sarif
+        category: aws-sg-audit

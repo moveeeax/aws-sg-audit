@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.22", "1.23"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Verify formatting
+        run: test -z "$(gofmt -l .)"
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Build
+        run: go build -o /tmp/aws-sg-audit .
+
+      - name: Smoke-test (usage error → exit 2)
+        run: |
+          if /tmp/aws-sg-audit --format table; then
+            echo "expected non-zero exit without --regions" >&2
+            exit 1
+          fi
+          code=$?
+          test "$code" -eq 2
+
+      - name: Smoke-test (help)
+        run: /tmp/aws-sg-audit --help

@@ -1,0 +1,28 @@
+# Example: audit security groups on a schedule and surface findings in code scanning.
+name: sg-audit
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # weekly, Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write   # required to upload SARIF
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/sg-audit-readonly
+          aws-region: us-east-1
+
+      - name: Audit security groups
+        uses: moveeeax/aws-sg-audit@v0
+        with:
+          regions: us-east-1,eu-west-1
+          public-ports: "80,443"
+          fail-on: high

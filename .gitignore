@@ -1,0 +1,6 @@
+/aws-sg-audit
+/dist/
+*.test
+*.out
+coverage.txt
+*.sarif
