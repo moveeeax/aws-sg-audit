@@ -34,11 +34,10 @@ jobs:
 
       - name: Smoke-test (usage error → exit 2)
         run: |
-          if /tmp/aws-sg-audit --format table; then
-            echo "expected non-zero exit without --regions" >&2
-            exit 1
-          fi
+          set +e
+          /tmp/aws-sg-audit --format table
           code=$?
+          set -e
           test "$code" -eq 2
 
       - name: Smoke-test (help)
