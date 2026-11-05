@@ -101,3 +101,7 @@ make lint    # gofmt -l . && go vet ./...
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+---
+
+**Archived on 2026-11-05.** Prowler (per-port checks plus instance-level exposure) and Security Hub cover world-open sensitive ports, including "attached" context; the only angle is a single Go binary with a SARIF Action, which is thin. Keep only if one of the reachability features below is built.
